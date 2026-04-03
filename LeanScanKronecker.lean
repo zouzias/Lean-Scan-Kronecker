@@ -1,1 +1,2 @@
+import LeanScanKronecker.Matrices
 import LeanScanKronecker.Example

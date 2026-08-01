@@ -1,6 +1,9 @@
-.PHONY: update-mathlib update
+.PHONY: lint update-mathlib update
 
-all:
+lint:
+	lake lint
+
+all: lint
 	lake build
 
 update-mathlib:

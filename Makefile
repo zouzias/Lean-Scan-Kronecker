@@ -1,5 +1,7 @@
-.PHONY: update
+.PHONY: update-mathlib update
 
+all:
+	lake build
 
 update-mathlib:
 	lake update mathlib

@@ -14,6 +14,8 @@ import Mathlib.Data.Fin.Basic
 import Mathlib.Logic.Equiv.Fin.Basic
 import Mathlib.LinearAlgebra.Matrix.Block
 
+set_option linter.unusedVariables false
+
 open Matrix Kronecker
 
 open Fin
@@ -37,9 +39,6 @@ variable (A B : Matrix (Fin n) (Fin n) R)
 
 open Matrix
 
-
-#check finProdFinEquiv
-example : Fin 2 × Fin 3 ≃ Fin (2 * 3) := finProdFinEquiv
 
 /-! ## Step 2: unpack finProdFinEquiv.symm into div/mod -/
 
@@ -151,20 +150,6 @@ lemma U_eq_I_add_U_strict (n : ℕ) :
     have hnle : ¬ (i ≤ j)  := Nat.not_le.mpr h
     have hnlt : ¬ (i < j)  := Nat.not_lt.mpr (Nat.le_of_lt h)
     simp [hnle, U_strict, I, hne, hnlt]
-
-/-- J = U + L_strict  (all-ones = upper-tri + strict-lower-tri) -/
-lemma J_eq_U_add_L_strict (n : ℕ) :
-    J n = U n + L_strict n := by
-  ext i j
-  simp only [J]
-  by_cases h : i ≤ j
-  · unfold U
-    unfold L_strict
-    simp [h]
-  · unfold U
-    unfold L_strict
-    simp [h]
-
 
 private lemma L_transpose_eq_U (n : ℕ) :
   Matrix.transpose (L n) = U n := by

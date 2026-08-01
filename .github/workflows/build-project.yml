@@ -40,6 +40,14 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all history for all branches and tags
 
+      - name: Check for sorry
+        run: |
+          ! grep -rn --include="*.lean" -w "sorry" LeanScanKronecker/
+
+      - name: Check for stray axioms
+        run: |
+          ! grep -rn --include="*.lean" -w "axiom" LeanScanKronecker/
+
       - name: Install and configure Lean, and get mathlib cache
         uses: leanprover/lean-action@38fbc41a8c28c4cbaec22d7f7de508ec2e7c0dd9 # v1.5.0
         with:

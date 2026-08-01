@@ -1,5 +1,7 @@
 name = "LeanScanKronecker"
 defaultTargets = ["LeanScanKronecker"]
+lintDriver = "batteries/runLinter"
+lintDriverArgs = ["LeanScanKronecker"]
 
 [leanOptions]
 pp.unicode.fun = true

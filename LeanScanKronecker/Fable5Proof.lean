@@ -60,6 +60,9 @@
 
 namespace KroneckerPrefixSum
 
+set_option linter.unusedVariables false
+
+
 /-! ### Matrices, Kronecker products, triangular all-ones matrices -/
 
 /-- Square integer matrices indexed by `α`. -/

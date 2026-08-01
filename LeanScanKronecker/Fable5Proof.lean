@@ -60,9 +60,6 @@
 
 namespace KroneckerPrefixSum
 
-set_option linter.unusedVariables false
-
-
 /-! ### Matrices, Kronecker products, triangular all-ones matrices -/
 
 /-- Square integer matrices indexed by `α`. -/
@@ -142,14 +139,14 @@ theorem L_eq_Id_add_Lm (n : Nat) : L n = Id n + Lm n := by
   simp only [L, Id, Lm, add_apply]
   by_cases h1 : j.val ≤ i.val <;> by_cases h2 : i.val = j.val <;>
       by_cases h3 : j.val < i.val <;>
-    simp [h1, h2, h3, Nat.lt_irrefl, Nat.le_refl] <;> omega
+    simp [h1, h2, h3, Nat.lt_irrefl] <;> omega
 
 theorem U_sub_Id_eq_Um (n : Nat) : U n - Id n = Um n := by
   funext i j
   simp only [U, Id, Um, sub_apply]
   by_cases h1 : i.val ≤ j.val <;> by_cases h2 : i.val = j.val <;>
       by_cases h3 : i.val < j.val <;>
-    simp [h1, h2, h3, Nat.lt_irrefl, Nat.le_refl] <;> omega
+    simp [h1, h2, h3, Nat.lt_irrefl] <;> omega
 
 /-! ### Bilinearity of the Kronecker product, pointwise matrix algebra
 
@@ -236,7 +233,7 @@ theorem eq5 (n1 n2 : Nat) :
       by_cases h2 : i.1.val = j.1.val <;>
         by_cases h3 : j.2.val < i.2.val <;>
           by_cases h4 : i.2.val ≤ j.2.val <;>
-    simp [h0, h1, h2, h3, h4, Nat.lt_irrefl, Nat.le_refl] <;> omega
+    simp [h0, h1, h2, h3, h4, Nat.lt_irrefl] <;> omega
 
 /-! ### Theorem 1, U-version:  `U_n = U_{n1} ⊗ U_{n2} + U⁻_{n1} ⊗ L⁻_{n2}` -/
 

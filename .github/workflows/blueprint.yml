@@ -48,7 +48,7 @@ jobs:
           mk_all-check: true
 
       - name: Compile blueprint and documentation
-        uses: leanprover-community/docgen-action@deed0cdc44dd8e5de07a300773eb751d33e32fc8 # 2025-10-26
+        uses: leanprover-community/docgen-action@10db47458f91456d87804787d3dfcd914b9a19e3 # 2026-06-07
         with:
           blueprint: true
           homepage: home_page

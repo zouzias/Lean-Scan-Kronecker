@@ -1,7 +1,425 @@
-% In this file you should put the actual content of the blueprint.
-% It will be used both by the web and the print version.
-% It should *not* include the \begin{document}
-%
-% If you want to split the blueprint content into several files then
-% the current file can be a simple sequence of \input. Otherwise It
-% can start with a \section or \chapter for instance.
+\section{Prefix sums via Kronecker products}
+
+This blueprint follows the Lean~4 formalization in
+\texttt{LeanScanKronecker/Fable5Proof.lean} of Theorem~1 of
+
+\begin{center}
+A. Sobczyk, A. Zouzias, \emph{Prefix Sums via Kronecker Products},
+arXiv:2512.16309, Section~II.
+\end{center}
+
+The file is self-contained: it compiles with plain Lean~4, no Mathlib
+required. All matrix entries live in $\mathbb{Z}$; the identities hold
+verbatim over any commutative ring, since $\mathbb{Z}$ is the initial one.
+
+\subsection{Matrices, Kronecker products, triangular all-ones matrices}
+
+\begin{definition}[Matrix]
+  \label{def:Mat}
+  \lean{KroneckerPrefixSum.Mat}
+  \leanok
+  For a type $\alpha$, a \emph{square matrix} indexed by $\alpha$ is a function
+  $A : \alpha \to \alpha \to \mathbb{Z}$, i.e. an element of
+  $\mathrm{Mat}(\alpha) := \alpha \to \alpha \to \mathbb{Z}$. Addition and
+  subtraction of matrices are defined entrywise.
+\end{definition}
+
+\begin{definition}[Transpose]
+  \label{def:transpose}
+  \uses{def:Mat}
+  \lean{KroneckerPrefixSum.transpose}
+  \leanok
+  For $A \in \mathrm{Mat}(\alpha)$, the transpose is
+  $A^\top(i,j) := A(j,i)$.
+\end{definition}
+
+\begin{definition}[Kronecker product]
+  \label{def:kron}
+  \uses{def:Mat}
+  \lean{KroneckerPrefixSum.kron}
+  \leanok
+  For $A \in \mathrm{Mat}(\alpha)$ and $B \in \mathrm{Mat}(\beta)$, the
+  Kronecker product $A \otimes B \in \mathrm{Mat}(\alpha \times \beta)$ is
+  defined by
+  \[
+    (A \otimes B)\big((i_1,i_2),(j_1,j_2)\big) := A(i_1,j_1) \cdot B(i_2,j_2).
+  \]
+  The row/column index $(i_1,i_2)$ corresponds to the flat index
+  $n_2 \cdot i_1 + i_2$ (block-major), matching the block matrix
+  $[a_{ij} B]$ of the paper.
+\end{definition}
+
+\begin{definition}[Triangular all-ones matrices]
+  \label{def:triangular}
+  \uses{def:Mat}
+  \lean{KroneckerPrefixSum.L, KroneckerPrefixSum.U, KroneckerPrefixSum.Lm, KroneckerPrefixSum.Um, KroneckerPrefixSum.Id, KroneckerPrefixSum.J}
+  \leanok
+  For $n \in \mathbb{N}$, define matrices in $\mathrm{Mat}(\mathrm{Fin}\ n)$ by
+  \begin{align*}
+    L_n(i,j) &:= [j \le i], & U_n(i,j) &:= [i \le j], \\
+    L^-_n(i,j) &:= [j < i], & U^-_n(i,j) &:= [i < j], \\
+    I_n(i,j) &:= [i = j], & J_n(i,j) &:= 1,
+  \end{align*}
+  where $[\cdot]$ denotes $1$ if the condition holds and $0$ otherwise.
+  That is, $L_n$ and $U_n$ are the lower and upper triangular all-ones
+  matrices, $L^-_n = L_n - I_n$ and $U^-_n = U_n - I_n$ their strict
+  versions, $I_n$ the identity, and $J_n = \mathbf 1_n \mathbf 1_n^\top$
+  the all-ones matrix.
+\end{definition}
+
+\begin{definition}[Block triangular matrices on pair indices]
+  \label{def:block}
+  \uses{def:Mat}
+  \lean{KroneckerPrefixSum.Lblock, KroneckerPrefixSum.Ublock}
+  \leanok
+  For $n_1, n_2 \in \mathbb{N}$, define $L^{\mathrm{blk}}_{n_1,n_2},
+  U^{\mathrm{blk}}_{n_1,n_2} \in \mathrm{Mat}(\mathrm{Fin}\ n_1 \times
+  \mathrm{Fin}\ n_2)$ by
+  \[
+    L^{\mathrm{blk}}_{n_1,n_2}\big((i_1,i_2),(j_1,j_2)\big) :=
+      \big[(j_1,j_2) \le_{\mathrm{lex}} (i_1,i_2)\big], \qquad
+    U^{\mathrm{blk}}_{n_1,n_2} := \big(L^{\mathrm{blk}}_{n_1,n_2}\big)^\top,
+  \]
+  where $\le_{\mathrm{lex}}$ is the lexicographic order induced by the flat
+  index $n_2 \cdot i_1 + i_2$. These are $L_{n_1 n_2}$ and $U_{n_1 n_2}$
+  read on pair indices instead of the flat index; this is made precise in
+  Section~\ref{sec:flat}.
+\end{definition}
+
+\subsection{Decompositions of the all-ones matrix}
+
+The paper's proof begins by decomposing the all-ones matrix into its
+upper triangular and strictly lower triangular all-ones parts. This and
+the analogous splittings used in the algebra are recorded here.
+
+\begin{lemma}
+  \label{lem:J_eq_U_add_Lm}
+  \uses{def:triangular}
+  \lean{KroneckerPrefixSum.J_eq_U_add_Lm}
+  \leanok
+  For all $n$, $J_n = U_n + L^-_n$.
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:J_eq_L_add_Um}
+  \uses{def:triangular}
+  \lean{KroneckerPrefixSum.J_eq_L_add_Um}
+  \leanok
+  For all $n$, $J_n = L_n + U^-_n$.
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:L_eq_Id_add_Lm}
+  \uses{def:triangular}
+  \lean{KroneckerPrefixSum.L_eq_Id_add_Lm}
+  \leanok
+  For all $n$, $L_n = I_n + L^-_n$.
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:U_sub_Id_eq_Um}
+  \uses{def:triangular}
+  \lean{KroneckerPrefixSum.U_sub_Id_eq_Um}
+  \leanok
+  For all $n$, $U_n - I_n = U^-_n$.
+\end{lemma}
+
+\subsection{Bilinearity of the Kronecker product}
+
+These lemmas play the role of the ``Kronecker properties'' from
+[Neu69] that the paper's proof invokes to rearrange terms.
+
+\begin{lemma}
+  \label{lem:kron_add_left}
+  \uses{def:kron}
+  \lean{KroneckerPrefixSum.kron_add_left}
+  \leanok
+  $(A + B) \otimes C = A \otimes C + B \otimes C$.
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:kron_add_right}
+  \uses{def:kron}
+  \lean{KroneckerPrefixSum.kron_add_right}
+  \leanok
+  $A \otimes (B + C) = A \otimes B + A \otimes C$.
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:kron_sub_left}
+  \uses{def:kron}
+  \lean{KroneckerPrefixSum.kron_sub_left}
+  \leanok
+  $(A - B) \otimes C = A \otimes C - B \otimes C$.
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:mat_add_sub}
+  \uses{def:Mat}
+  \lean{KroneckerPrefixSum.mat_add_sub}
+  \leanok
+  $(X + Y) - Z = X + (Y - Z)$.
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:mat_add_assoc}
+  \uses{def:Mat}
+  \lean{KroneckerPrefixSum.mat_add_assoc}
+  \leanok
+  $X + Y + Z = X + (Y + Z)$.
+\end{lemma}
+
+\subsection{Step (a): reducing Eq.~(4) to Eq.~(5)}
+
+\begin{lemma}[Eq.~(5), right-hand side]
+  \label{lem:eq5_rhs}
+  \uses{def:kron, def:triangular, lem:J_eq_U_add_Lm, lem:kron_add_right,
+    lem:mat_add_sub, lem:kron_sub_left, lem:U_sub_Id_eq_Um}
+  \lean{KroneckerPrefixSum.eq5_rhs}
+  \leanok
+  For all $n_1, n_2$,
+  \[
+    U_{n_1} \otimes J_{n_2} - I_{n_1} \otimes L^-_{n_2}
+      = U_{n_1} \otimes U_{n_2} + U^-_{n_1} \otimes L^-_{n_2}.
+  \]
+\end{lemma}
+\begin{proof}
+  Follows the displayed chain of equalities in the paper:
+  \[
+    U \otimes J - I \otimes L^-
+      = U \otimes (U + L^-) - I \otimes L^-
+      = U \otimes U + (U - I) \otimes L^-
+      = U \otimes U + U^- \otimes L^-,
+  \]
+  using $J = U + L^-$ (Lemma~\ref{lem:J_eq_U_add_Lm}), bilinearity of
+  $\otimes$ (Lemmas~\ref{lem:kron_add_right}, \ref{lem:kron_sub_left}),
+  rearranging with Lemma~\ref{lem:mat_add_sub}, and $U - I = U^-$
+  (Lemma~\ref{lem:U_sub_Id_eq_Um}).
+\end{proof}
+
+\subsection{Step (b): Eq.~(5) itself}
+
+\begin{lemma}[Eq.~(5)]
+  \label{lem:eq5}
+  \uses{def:kron, def:triangular, def:block}
+  \lean{KroneckerPrefixSum.eq5}
+  \leanok
+  For all $n_1, n_2$,
+  \[
+    U_{n_1} \otimes J_{n_2} - I_{n_1} \otimes L^-_{n_2} = U^{\mathrm{blk}}_{n_1,n_2}.
+  \]
+\end{lemma}
+\begin{proof}
+  Proved entrywise, following the paper's two-part argument: on the
+  upper-triangular part (block column $\ge$ block row), $I \otimes L^-$
+  is strictly lower triangular by construction while every entry of the
+  upper part of $U \otimes J$ is one, so the difference is one; on the
+  strictly-lower part, the off-diagonal lower blocks of both Kronecker
+  summands vanish, and each diagonal $n_2 \times n_2$ block equals
+  $J_{n_2} - L^-_{n_2} = U_{n_2}$.
+\end{proof}
+
+\subsection{Theorem 1, U-version}
+
+\begin{theorem}
+  \label{thm:theorem1_U}
+  \uses{lem:eq5, lem:eq5_rhs}
+  \lean{KroneckerPrefixSum.theorem1_U}
+  \leanok
+  For all $n_1, n_2$,
+  \[
+    U^{\mathrm{blk}}_{n_1,n_2} = U_{n_1} \otimes U_{n_2} + U^-_{n_1} \otimes L^-_{n_2}.
+  \]
+\end{theorem}
+\begin{proof}
+  Immediate from Eq.~(5) (Lemma~\ref{lem:eq5}) and its right-hand-side
+  reduction (Lemma~\ref{lem:eq5_rhs}).
+\end{proof}
+
+\subsection{Step (c): transposition}
+
+$(A \otimes B)^\top = A^\top \otimes B^\top$ ([Neu69, Eq.~2.4]), and
+transposition swaps the $L$- and $U$-matrices. All of the following are
+definitional equalities in the Lean formalization.
+
+\begin{lemma}
+  \label{lem:transpose_kron}
+  \uses{def:transpose, def:kron}
+  \lean{KroneckerPrefixSum.transpose_kron}
+  \leanok
+  $(A \otimes B)^\top = A^\top \otimes B^\top$.
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:transpose_add}
+  \uses{def:transpose, def:Mat}
+  \lean{KroneckerPrefixSum.transpose_add}
+  \leanok
+  $(A + B)^\top = A^\top + B^\top$.
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:transpose_triangular}
+  \uses{def:transpose, def:triangular}
+  \lean{KroneckerPrefixSum.transpose_U, KroneckerPrefixSum.transpose_L, KroneckerPrefixSum.transpose_Um, KroneckerPrefixSum.transpose_Lm, KroneckerPrefixSum.transpose_Id}
+  \leanok
+  $U_n^\top = L_n$, $L_n^\top = U_n$, $(U^-_n)^\top = L^-_n$,
+  $(L^-_n)^\top = U^-_n$, and $I_n^\top = I_n$.
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:transpose_Ublock}
+  \uses{def:transpose, def:block}
+  \lean{KroneckerPrefixSum.transpose_Ublock}
+  \leanok
+  $\big(U^{\mathrm{blk}}_{n_1,n_2}\big)^\top = L^{\mathrm{blk}}_{n_1,n_2}$.
+\end{lemma}
+
+\subsection{Theorem 1, Eq.~(4)}
+
+\begin{theorem}
+  \label{thm:theorem1_L}
+  \uses{thm:theorem1_U, lem:transpose_kron, lem:transpose_add,
+    lem:transpose_triangular, lem:transpose_Ublock}
+  \lean{KroneckerPrefixSum.theorem1_L}
+  \leanok
+  For all $n_1, n_2$,
+  \[
+    L^{\mathrm{blk}}_{n_1,n_2} = L_{n_1} \otimes L_{n_2} + L^-_{n_1} \otimes U^-_{n_2}.
+  \]
+\end{theorem}
+\begin{proof}
+  Transpose the U-version (Theorem~\ref{thm:theorem1_U}) using
+  $(A \otimes B)^\top = A^\top \otimes B^\top$ and the transposition
+  identities for the triangular all-ones matrices.
+\end{proof}
+
+\begin{theorem}[Theorem 1, second form]
+  \label{thm:theorem1_L'}
+  \uses{thm:theorem1_L, lem:L_eq_Id_add_Lm, lem:kron_add_left,
+    lem:mat_add_assoc, lem:kron_add_right, lem:J_eq_L_add_Um}
+  \lean{KroneckerPrefixSum.theorem1_L'}
+  \leanok
+  For all $n_1, n_2$,
+  \[
+    L^{\mathrm{blk}}_{n_1,n_2} = I_{n_1} \otimes L_{n_2} + L^-_{n_1} \otimes J_{n_2}.
+  \]
+\end{theorem}
+\begin{proof}
+  Obtained from Theorem~\ref{thm:theorem1_L} by splitting
+  $L_{n_1} = I_{n_1} + L^-_{n_1}$ (Lemma~\ref{lem:L_eq_Id_add_Lm}) and
+  recombining $L_{n_2} + U^-_{n_2} = J_{n_2}$
+  (Lemma~\ref{lem:J_eq_L_add_Um}), using bilinearity of $\otimes$.
+\end{proof}
+
+\subsection{The flat index set \texorpdfstring{$\mathrm{Fin}(n_1 n_2)$}{Fin (n1*n2)}}
+\label{sec:flat}
+
+$L^{\mathrm{blk}}_{n_1,n_2}$ and $U^{\mathrm{blk}}_{n_1,n_2}$ above are
+$L_{n_1 n_2}$ and $U_{n_1 n_2}$ written on pair indices. This section
+makes that precise: \texttt{encode} is a bijection
+$\mathrm{Fin}\ n_1 \times \mathrm{Fin}\ n_2 \to \mathrm{Fin}(n_1 n_2)$
+transporting the lexicographic order to the natural order, so that
+Theorem~1 can be restated for the honest flat matrix $L_{n_1 n_2}$.
+
+\begin{definition}[Flat index encoding]
+  \label{def:encode}
+  \lean{KroneckerPrefixSum.encode}
+  \leanok
+  For $p = (i_1, i_2) \in \mathrm{Fin}\ n_1 \times \mathrm{Fin}\ n_2$,
+  define the block-major flat index
+  $\mathrm{encode}(p) := n_2 \cdot i_1 + i_2 \in \mathrm{Fin}(n_1 n_2)$.
+\end{definition}
+
+\begin{lemma}
+  \label{lem:flat_le_iff}
+  \lean{KroneckerPrefixSum.flat_le_iff}
+  \leanok
+  For $a, c \in \mathbb{N}$ and $b, d < n_2$,
+  \[
+    n_2 a + b \le n_2 c + d \iff a < c \lor (a = c \land b \le d).
+  \]
+\end{lemma}
+
+\begin{lemma}[\texttt{encode} transports the lexicographic order]
+  \label{lem:encode_le}
+  \uses{def:encode, lem:flat_le_iff}
+  \lean{KroneckerPrefixSum.encode_le}
+  \leanok
+  For $p, q \in \mathrm{Fin}\ n_1 \times \mathrm{Fin}\ n_2$,
+  \[
+    \mathrm{encode}(p) \le \mathrm{encode}(q) \iff
+      p_1 < q_1 \lor (p_1 = q_1 \land p_2 \le q_2).
+  \]
+\end{lemma}
+
+\begin{definition}[Flat index decoding]
+  \label{def:decode}
+  \uses{def:encode}
+  \lean{KroneckerPrefixSum.decode}
+  \leanok
+  For $0 < n_2$ and $k \in \mathrm{Fin}(n_1 n_2)$, define
+  $\mathrm{decode}(k) := (\lfloor k / n_2 \rfloor, k \bmod n_2) \in
+  \mathrm{Fin}\ n_1 \times \mathrm{Fin}\ n_2$, the inverse of
+  \texttt{encode}.
+\end{definition}
+
+\begin{lemma}
+  \label{lem:encode_decode}
+  \uses{def:encode, def:decode}
+  \lean{KroneckerPrefixSum.encode_decode}
+  \leanok
+  For $0 < n_2$ and $k \in \mathrm{Fin}(n_1 n_2)$,
+  $\mathrm{encode}(\mathrm{decode}(k)) = k$.
+\end{lemma}
+
+\begin{lemma}
+  \label{lem:decode_encode}
+  \uses{def:encode, def:decode}
+  \lean{KroneckerPrefixSum.decode_encode}
+  \leanok
+  For $0 < n_2$ and $p \in \mathrm{Fin}\ n_1 \times \mathrm{Fin}\ n_2$,
+  $\mathrm{decode}(\mathrm{encode}(p)) = p$.
+\end{lemma}
+
+\begin{lemma}[\texttt{Lblock} is \texttt{L} through the flat-index map]
+  \label{lem:L_encode}
+  \uses{def:block, def:triangular, lem:encode_le}
+  \lean{KroneckerPrefixSum.L_encode}
+  \leanok
+  For $p, q \in \mathrm{Fin}\ n_1 \times \mathrm{Fin}\ n_2$,
+  \[
+    L_{n_1 n_2}(\mathrm{encode}(p), \mathrm{encode}(q)) = L^{\mathrm{blk}}_{n_1,n_2}(p,q).
+  \]
+\end{lemma}
+
+\begin{theorem}[Theorem 1, flat form]
+  \label{thm:theorem1_flat}
+  \uses{lem:L_encode, thm:theorem1_L}
+  \lean{KroneckerPrefixSum.theorem1_flat}
+  \leanok
+  For $p, q \in \mathrm{Fin}\ n_1 \times \mathrm{Fin}\ n_2$, writing
+  $p = (i_1,i_2)$, $q = (j_1,j_2)$,
+  \[
+    L_{n_1 n_2}(\mathrm{encode}(p), \mathrm{encode}(q))
+      = L_{n_1}(i_1,j_1) \cdot L_{n_2}(i_2,j_2)
+        + L^-_{n_1}(i_1,j_1) \cdot U^-_{n_2}(i_2,j_2).
+  \]
+\end{theorem}
+
+\begin{theorem}[Theorem 1, flat form, arbitrary indices]
+  \label{thm:theorem1_flat'}
+  \uses{thm:theorem1_flat, lem:encode_decode, def:decode}
+  \lean{KroneckerPrefixSum.theorem1_flat'}
+  \leanok
+  For $0 < n_2$ and $i, j \in \mathrm{Fin}(n_1 n_2)$, writing
+  $(i_1,i_2) = \mathrm{decode}(i)$, $(j_1,j_2) = \mathrm{decode}(j)$,
+  \[
+    L_{n_1 n_2}(i,j)
+      = L_{n_1}(i_1,j_1) \cdot L_{n_2}(i_2,j_2)
+        + L^-_{n_1}(i_1,j_1) \cdot U^-_{n_2}(i_2,j_2).
+  \]
+  Together with Lemmas~\ref{lem:encode_decode} and
+  \ref{lem:decode_encode}, this covers every entry of $L_{n_1 n_2}$, and
+  is Eq.~(4) of the paper for the honest flat matrix $L_{n_1 n_2}$.
+\end{theorem}

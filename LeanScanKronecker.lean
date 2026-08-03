@@ -1,2 +1,2 @@
-import LeanScanKronecker.Fable5Proof
 import LeanScanKronecker.AxiomCheck
+import LeanScanKronecker.Fable5Proof

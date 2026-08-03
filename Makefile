@@ -2,6 +2,7 @@
 
 lint:
 	lake lint
+	lake exe mk_all
 
 all: lint
 	lake build

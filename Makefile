@@ -1,4 +1,4 @@
-.PHONY: lint update-mathlib update
+.PHONY: lint all update-mathlib update blueprint
 
 lint:
 	lake lint
@@ -11,3 +11,6 @@ update-mathlib:
 
 update:
 	elan self update
+
+blueprint:
+	leanblueprint web
